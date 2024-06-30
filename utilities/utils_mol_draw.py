@@ -1,20 +1,22 @@
+#General imports
 import io
 import os
-
-import matplotlib
-import matplotlib as mpl
 import numpy as np
 from PIL import Image
+from collections import defaultdict
+from typing import List, Union, Dict
+
+# Plotting
+import matplotlib
+import matplotlib as mpl
 from matplotlib import pyplot as plt
+# Rdkit
 from rdkit import Geometry, Chem
 from rdkit.Chem import Draw, AllChem
 from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
 
-DEFAULT_COLORMAP = 'coolwarm'  # "PiYG_r"#'coolwarm'
-from collections import defaultdict
-from typing import List, Union, Dict
-
+DEFAULT_COLORMAP = 'coolwarm'
 
 def get_ecfp4_bit_info(smi: str, n_bits: int = 2048) -> Dict:
     """
@@ -92,7 +94,7 @@ def shap_to_atom_weight(mol: Chem.Mol, dict_bit_info: dict, shapley_values: np.n
 def get_atom_wise_weight_map(mol, weights, mol_size, cmap=DEFAULT_COLORMAP, return_png: bool = True) -> Union[
     Image.Image, Draw.MolDraw2D]:
     """
-    Generate
+    Generate a molecule image with atom-wise weights mapped onto the atoms
     :param mol: molecule to display
     :param weights: weights to map onto the atoms
     :param mol_size: size of the molecule image
@@ -148,7 +150,7 @@ def get_atom_wise_weight_map(mol, weights, mol_size, cmap=DEFAULT_COLORMAP, retu
 def get_atom_wise_weight_map_ref_mol(m, weights, mol_size, cmap=DEFAULT_COLORMAP, return_png: bool = True, ref_mol=None,
                                      highlightsub=None) -> Union[Image.Image, Draw.MolDraw2D]:
     """
-    Generate
+    Generate a molecule image with atom-wise weights mapped onto the atoms based on a reference molecule
     :param mol: molecule to display
     :param weights: weights to map onto the atoms
     :param mol_size: size of the molecule image
@@ -162,7 +164,7 @@ def get_atom_wise_weight_map_ref_mol(m, weights, mol_size, cmap=DEFAULT_COLORMAP
     draw2d.drawOptions().continuousHighlight = False
     draw2d.drawOptions().circleAtoms = False
     # draw2d.drawOptions().scaleBondWidth = False
-    #draw2d.drawOptions().highlightBondWidthMultiplier = 10
+    # draw2d.drawOptions().highlightBondWidthMultiplier = 10
     draw2d.drawOptions().atomHighlightsAreCircles = False
     draw2d.drawOptions().setHighlightColour(
         (.0, .1, .6, 1))  # (.5,.1,.9,1) purple #(.0,.1,.9, 1) blue #(.0,.7,.4, 1) green
@@ -203,20 +205,10 @@ def get_atom_wise_weight_map_ref_mol(m, weights, mol_size, cmap=DEFAULT_COLORMAP
     ps.gridResolution = 0.1
     ps.extraGridPadding = 2.0
 
-    #coolwarm = ((0.017, 0.50, 0.850, 1),
-     #           (1, 1, 1, 1),
-      #          (1, 0.25, 0.0, 1)
-       #         )
-    lamarr = ((0.0, 0.62, 0.89, 1),
-              (1, 1, 1, 1),
-              (0.93, 0.39, 0.41, 1)
-                )
-    # if isinstance(cmap, str):
-    #     cmap = plt.get_cmap(cmap)
-    #     # it's a matplotlib colormap:
-    #     clrs = [tuple(cmap.get_under()), (1, 1, 1), tuple(cmap.get_over())]
-    # else:
-    clrs = lamarr
+    if isinstance(cmap, str):
+         cmap = plt.get_cmap(cmap)
+         # it's a matplotlib colormap:
+         clrs = [tuple(cmap.get_under()), (1, 1, 1), tuple(cmap.get_over())]
 
     ps.setColourMap(clrs)
 

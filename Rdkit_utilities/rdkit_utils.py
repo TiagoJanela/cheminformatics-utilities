@@ -1,13 +1,14 @@
+# Imports
 import re
 from typing import Iterable, List
-
 import pandas as pd
-from rdkit import Chem, DataStructs
-from rdkit.Chem import AllChem, rdmolops, MolStandardize
 from tqdm import tqdm
+# RDKit
+from rdkit import Chem, DataStructs
+from rdkit.Chem import AllChem, MolStandardize
 
 
-def substituent_conversion(subst_strings: str) -> list:
+def substituent_conversion(subst_strings: str) -> str:
     """
     Replaces the cutting sites with Hidrogen atoms, to be later removed
     :param subst_strings: smile str
@@ -17,9 +18,14 @@ def substituent_conversion(subst_strings: str) -> list:
     return subst
 
 
-def remove_H(core):
+def remove_H(mol_smarts: str) -> list[str]:
+    """
+    Removes the H atoms from smiles
+    :param mol_smarts: smarts str
+    :return: List of smarts without H
+    """
     smart_no_H_list = []
-    for smart in core:
+    for smart in mol_smarts:
         reg = re.sub('[H]', '', smart)
         smart_no_H_list.append(reg)
     return smart_no_H_list
@@ -41,10 +47,20 @@ def mol_weight(smiles):
 
 
 def gen_canon_smiles(smarts):
+    """
+    Generates canonical smiles from smarts
+    :param smarts: str
+    :return: Canonical smiles
+    """
     return Chem.MolToSmiles(Chem.MolFromSmarts(smarts))
 
 
 def gen_canon_smiles_dict(smarts_list):
+    """
+    Generates a dictionary with the canonical smiles as values
+    :param smarts_list: List of smarts
+    :return: Dictionary with the canonical smiles
+    """
     canon_smiles_list = [Chem.MolToSmiles(Chem.MolFromSmarts(smarts)) for smarts in smarts_list]
     smarts_dict = dict(zip(smarts_list, canon_smiles_list))
     return smarts_dict
@@ -63,7 +79,8 @@ def remove_dup_smarts(ringlist):
 def GetNumRingsize(mol):
     """
     In order to calculate ring size easily, once converting into (CSK) cyclic skeletons.
-
+    :param mol: mol object
+    :return: int: max ring size
     """
     mol = Chem.Scaffolds.MurckoScaffold.MakeScaffoldGeneric(mol)
     Chem.FastFindRings(mol)
@@ -75,7 +92,7 @@ def GetNumRingsize(mol):
 def ring_count(sma: str) -> int:
     """
     Counts the number of rings in the molecule
-    :param sma:
+    :param sma: smarts str
     :param smi: smile str
     :return: int: Number of rings
     """
@@ -97,6 +114,11 @@ def fused_ring_count(smi: str) -> list:
 
 
 def ring_info(mol):
+    """
+    Get the ring information from the molecule
+    :param mol: mol object
+    :return: RingInfo
+    """
     try:
         ring = mol.GetRingInfo()
         return ring
@@ -107,6 +129,11 @@ def ring_info(mol):
 
 
 def ring_atoms(mol):
+    """
+    Get the ring atoms from the molecule
+    :param mol: mol object
+    :return: Ring atoms
+    """
     rings = ring_info(mol).AtomRings()
     ring_list = [list(ri) for ri in rings]
     return ring_list
@@ -116,7 +143,7 @@ def GetRingSystems(mol, includeSpiro=True):
     """
     From https://www.rdkit.org/docs/Cookbook.html
     :param mol: mol boject
-    :param includeSpiro:
+    :param includeSpiro: bool
     :return: List
     """
     ri = mol.GetRingInfo()
@@ -134,6 +161,7 @@ def GetRingSystems(mol, includeSpiro=True):
         systems = nSystems
 
     return systems
+
 
 def mol_with_atom_index(smi: str) -> Iterable[Chem.Mol]:
     """
@@ -158,11 +186,12 @@ def reorder_smart(original_smart) -> List[str]:
     for sma in original_smart:
         try:
             mol_obj = Chem.MolFromSmiles(Chem.CanonSmiles(sma))
-            rdmolops.Kekulize(mol_obj)
+            Chem.Kekulize(mol_obj)
             sma_list.append(Chem.MolToSmarts(mol_obj))
         except:
             sma_list.append(sma)
     return sma_list_unique
+
 
 def canon_smarts(smarts: Iterable[str]) -> List:
     """
@@ -176,8 +205,14 @@ def canon_smarts(smarts: Iterable[str]) -> List:
         sma_list.append(canon_sma)
     return sma_list
 
+
 # correct nH smiles MS
 def my_mol_from_smiles(smiles):
+    """
+    Corrects the number of H atoms in the molecule
+    :param smiles: smiles str
+    :return: corrected smiles
+    """
     m = Chem.MolFromSmiles(smiles)
     if m is not None:
         return Chem.MolToSmiles(m)
@@ -193,6 +228,11 @@ def my_mol_from_smiles(smiles):
 
 
 def my_mol_from_smiles_list(smi_list: Iterable[str]):
+    """
+    Corrects the number of H atoms in the molecule
+    :param smi_list: smiles list
+    :return: Corrected smiles list
+    """
     smi_list_nH = []
     for smiles in smi_list:
         m = Chem.MolFromSmiles(smiles)
@@ -210,13 +250,12 @@ def my_mol_from_smiles_list(smi_list: Iterable[str]):
     return smi_list_nH
 
 
-def pairwise_similarity(fps: list, fp_n: str, idx) -> pd.DataFrame:
+def pairwise_similarity(fps: list, idx) -> pd.DataFrame:
     """
     Generates the similarity Tc values for every cpds vs all other cpds
     :param fps: fingerprint vector
-    :param fp_n: fingerprint name
     :param idx: database chembl cid
-    :return: pd.Dataframe with the similarity
+    :return: Pandas dataframe with similarity
     """
     # the list for the dataframe
     qu_m, ta_m, sim = [], [], []

@@ -38,3 +38,10 @@ class Dataset:
 
     def shuffle(self):
         random.Random(1).shuffle(self.labels)
+
+    def shuffle_instances(self, instance_names=None):
+        if instance_names is None:
+            raise ValueError('No instance names provided to shuffle')
+        for instance_name in instance_names:
+            if instance_name in self._add_instances:
+                random.Random(1).shuffle(self.__dict__[instance_name])
